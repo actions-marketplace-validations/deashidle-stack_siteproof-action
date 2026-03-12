@@ -16,7 +16,7 @@
 ## Quick Start
 
 ```yaml
-- uses: deveras/siteproof-action@v1
+- uses: deashidle-stack/siteproof-action@v1
   with:
     url: 'https://example.com'
     api-key: ${{ secrets.SITEPROOF_API_KEY }}
@@ -36,7 +36,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: deveras/siteproof-action@v1
+      - uses: deashidle-stack/siteproof-action@v1
         with:
           url: 'https://your-site.com'
           api-key: ${{ secrets.SITEPROOF_API_KEY }}
@@ -63,7 +63,7 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      - uses: deveras/siteproof-action@v1
+      - uses: deashidle-stack/siteproof-action@v1
         with:
           url: ${{ steps.deploy.outputs.preview-url }}
           api-key: ${{ secrets.SITEPROOF_API_KEY }}
@@ -74,7 +74,7 @@ jobs:
 ### Score threshold gate
 
 ```yaml
-- uses: deveras/siteproof-action@v1
+- uses: deashidle-stack/siteproof-action@v1
   with:
     url: 'https://your-site.com'
     api-key: ${{ secrets.SITEPROOF_API_KEY }}
@@ -85,7 +85,7 @@ jobs:
 ### With fix recipes (Pro tier)
 
 ```yaml
-- uses: deveras/siteproof-action@v1
+- uses: deashidle-stack/siteproof-action@v1
   with:
     url: 'https://your-site.com'
     api-key: ${{ secrets.SITEPROOF_API_KEY }}
@@ -96,7 +96,7 @@ jobs:
 ### Use outputs in subsequent steps
 
 ```yaml
-- uses: deveras/siteproof-action@v1
+- uses: deashidle-stack/siteproof-action@v1
   id: a11y
   with:
     url: 'https://your-site.com'
