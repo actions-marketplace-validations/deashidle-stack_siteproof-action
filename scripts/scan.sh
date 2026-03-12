@@ -125,6 +125,47 @@ esac
 
 echo "passed=${PASSED}" >> "${GITHUB_OUTPUT}"
 
+# ── Optional AEO scan ──
+AEO_SCORE="N/A"
+AEO_GRADE="N/A"
+AEO_CATEGORIES=""
+
+if [[ "${INPUT_AEO:-false}" == "true" ]]; then
+  echo "::group::AEO Scan"
+  echo "Running AI Engine Optimization scan..."
+  set +x
+  AEO_RESPONSE=$(curl -sf --max-time 120 \
+    -X POST "${API_URL}/v1/aeo" \
+    -H "x-api-key: ${INPUT_API_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "{\"url\": \"${INPUT_URL}\"}" 2>&1) || {
+    echo "::warning::AEO scan failed (non-fatal)"
+    AEO_RESPONSE=""
+  }
+
+  if [[ -n "${AEO_RESPONSE}" ]]; then
+    AEO_SUCCESS=$(echo "${AEO_RESPONSE}" | jq -r '.success // false')
+    if [[ "${AEO_SUCCESS}" == "true" ]]; then
+      AEO_SCORE=$(echo "${AEO_RESPONSE}" | jq -r '.data.score.total // "N/A"')
+      AEO_GRADE=$(echo "${AEO_RESPONSE}" | jq -r '.data.grade // "N/A"')
+      AEO_SD=$(echo "${AEO_RESPONSE}" | jq -r '.data.score.categories.structuredData // 0')
+      AEO_CS=$(echo "${AEO_RESPONSE}" | jq -r '.data.score.categories.contentStructure // 0')
+      AEO_TE=$(echo "${AEO_RESPONSE}" | jq -r '.data.score.categories.technical // 0')
+      AEO_AU=$(echo "${AEO_RESPONSE}" | jq -r '.data.score.categories.authority // 0')
+      AEO_CR=$(echo "${AEO_RESPONSE}" | jq -r '.data.score.categories.citationReadiness // 0')
+      AEO_CATEGORIES="SD:${AEO_SD} CS:${AEO_CS} Tech:${AEO_TE} Auth:${AEO_AU} Cite:${AEO_CR}"
+      echo "AEO Score: ${AEO_SCORE}/100 (Grade ${AEO_GRADE})"
+      echo "  ${AEO_CATEGORIES}"
+    else
+      echo "::warning::AEO scan returned error"
+    fi
+  fi
+  echo "::endgroup::"
+fi
+
+echo "aeo-score=${AEO_SCORE}" >> "${GITHUB_OUTPUT}"
+echo "aeo-grade=${AEO_GRADE}" >> "${GITHUB_OUTPUT}"
+
 # ── Write job summary ──
 {
   echo "## SiteProof Website Quality Report"
@@ -138,6 +179,10 @@ echo "passed=${PASSED}" >> "${GITHUB_OUTPUT}"
     echo "| UX Quality | ${UX_SCORE}/100 |"
   fi
   echo "| Issues | ${ISSUE_COUNT} (${CRITICAL} critical, ${SERIOUS} serious, ${MODERATE} moderate, ${MINOR} minor) |"
+  if [[ "${AEO_SCORE}" != "N/A" ]]; then
+    echo "| AEO Score | **${AEO_SCORE}/100** (Grade **${AEO_GRADE}**) |"
+    echo "| AEO Breakdown | ${AEO_CATEGORIES} |"
+  fi
   if [[ "${EST_SCORE}" != "N/A" ]]; then
     echo "| Est. after fix | ${EST_SCORE}/100 (Grade ${EST_GRADE}) |"
   fi
@@ -172,7 +217,7 @@ if [[ "${INPUT_COMMENT}" == "true" ]]; then
     "${SCORE}" "${GRADE}" "${ISSUE_COUNT}" \
     "${CRITICAL}" "${SERIOUS}" "${MODERATE}" "${MINOR}" \
     "${PASSED}" "${FAIL_REASON}" "${EST_SCORE}" "${EST_GRADE}" \
-    "${WCAG_SCORE}" "${UX_SCORE}"
+    "${WCAG_SCORE}" "${UX_SCORE}" "${AEO_SCORE}" "${AEO_GRADE}"
 fi
 
 # ── Exit with appropriate code ──

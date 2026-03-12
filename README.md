@@ -8,7 +8,8 @@
 
 - **WCAG 2.1 AA/AAA** accessibility scanning
 - **UX quality** scoring (forms, performance, security, mobile readiness)
-- Score breakdown: overall + WCAG + UX
+- **AI Engine Optimization** (AEO) scanning for AI search readiness
+- Score breakdown: overall + WCAG + UX + AEO
 - Configurable pass/fail thresholds
 - Auto-updating PR comments with scan results
 - Fix recipes with before/after code (Pro tier)
@@ -94,6 +95,17 @@ jobs:
     fail-on: serious
 ```
 
+### With AI Engine Optimization (AEO) scan
+
+```yaml
+- uses: deashidle-stack/siteproof-action@v1
+  with:
+    url: 'https://your-site.com'
+    api-key: ${{ secrets.SITEPROOF_API_KEY }}
+    aeo: true
+    fail-on: serious
+```
+
 ### Use outputs in subsequent steps
 
 ```yaml
@@ -108,6 +120,7 @@ jobs:
     echo "Overall: ${{ steps.quality.outputs.score }} (Grade ${{ steps.quality.outputs.grade }})"
     echo "WCAG: ${{ steps.quality.outputs.wcag-score }}"
     echo "UX: ${{ steps.quality.outputs.ux-score }}"
+    echo "AEO: ${{ steps.quality.outputs.aeo-score }}"
 ```
 
 ## Inputs
@@ -120,6 +133,7 @@ jobs:
 | `threshold` | No | `0` | Minimum score to pass (0-100). Only used when `fail-on` is `score`. |
 | `comment` | No | `true` | Post results as a PR comment |
 | `recipe` | No | `false` | Include fix recipes in output (Pro tier) |
+| `aeo` | No | `false` | Include AI Engine Optimization scan |
 | `api-url` | No | Production URL | Override API base URL (for testing) |
 
 ## Outputs
@@ -132,6 +146,8 @@ jobs:
 | `passed` | Whether the check passed (`true`/`false`) |
 | `wcag-score` | WCAG accessibility score (0-100) |
 | `ux-score` | UX quality score (0-100) |
+| `aeo-score` | AI Engine Optimization score (0-100) |
+| `aeo-grade` | AEO letter grade (A-F) |
 
 ## Fail Modes
 

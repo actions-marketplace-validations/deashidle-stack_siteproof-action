@@ -18,6 +18,8 @@ EST_SCORE="${10}"
 EST_GRADE="${11}"
 WCAG_SCORE="${12:-N/A}"
 UX_SCORE="${13:-N/A}"
+AEO_SCORE="${14:-N/A}"
+AEO_GRADE="${15:-N/A}"
 RESPONSE="${SCAN_RESPONSE:-}"
 
 MARKER="<!-- siteproof-scan -->"
@@ -61,6 +63,11 @@ fi
 
 BODY="${BODY}
 | Issues | ${ISSUE_COUNT} (${CRITICAL} critical, ${SERIOUS} serious, ${MODERATE} moderate, ${MINOR} minor) |"
+
+if [[ "${AEO_SCORE}" != "N/A" ]]; then
+  BODY="${BODY}
+| AEO Score | **${AEO_SCORE}/100** (Grade **${AEO_GRADE}**) |"
+fi
 
 if [[ "${EST_SCORE}" != "N/A" ]]; then
   BODY="${BODY}
