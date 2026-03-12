@@ -1,13 +1,14 @@
-# SiteProof Accessibility Scanner
+# SiteProof Website Quality Scanner
 
-> Scan websites for WCAG accessibility issues in your CI/CD pipeline and get structured fix recipes.
+> Scan websites for WCAG accessibility and UX quality issues in your CI/CD pipeline. Get structured fix recipes with before/after code.
 
-[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-SiteProof-blue?logo=github)](https://github.com/marketplace/actions/siteproof-accessibility-scanner)
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-SiteProof-blue?logo=github)](https://github.com/marketplace/actions/siteproof-website-quality-scanner)
 
 ## Features
 
-- WCAG 2.1 AA/AAA accessibility scanning
-- Score, grade, and issue breakdown per severity
+- **WCAG 2.1 AA/AAA** accessibility scanning
+- **UX quality** scoring (forms, performance, security, mobile readiness)
+- Score breakdown: overall + WCAG + UX
 - Configurable pass/fail thresholds
 - Auto-updating PR comments with scan results
 - Fix recipes with before/after code (Pro tier)
@@ -29,7 +30,7 @@ Get your API key at [deveras.no/siteproof](https://deveras.no/siteproof).
 ### Scan on every PR
 
 ```yaml
-name: Accessibility
+name: Website Quality
 on: [pull_request]
 
 jobs:
@@ -46,7 +47,7 @@ jobs:
 ### Scan a Vercel preview deployment
 
 ```yaml
-name: Accessibility
+name: Website Quality
 on: [pull_request]
 
 jobs:
@@ -97,13 +98,16 @@ jobs:
 
 ```yaml
 - uses: deashidle-stack/siteproof-action@v1
-  id: a11y
+  id: quality
   with:
     url: 'https://your-site.com'
     api-key: ${{ secrets.SITEPROOF_API_KEY }}
     fail-on: none
 
-- run: echo "Score is ${{ steps.a11y.outputs.score }}, grade ${{ steps.a11y.outputs.grade }}"
+- run: |
+    echo "Overall: ${{ steps.quality.outputs.score }} (Grade ${{ steps.quality.outputs.grade }})"
+    echo "WCAG: ${{ steps.quality.outputs.wcag-score }}"
+    echo "UX: ${{ steps.quality.outputs.ux-score }}"
 ```
 
 ## Inputs
@@ -122,10 +126,12 @@ jobs:
 
 | Output | Description |
 |--------|-------------|
-| `score` | Accessibility score (0-100) |
+| `score` | Overall quality score (0-100) |
 | `grade` | Letter grade (A-F) |
-| `issues` | Number of issues found |
+| `issues` | Number of accessibility issues found |
 | `passed` | Whether the check passed (`true`/`false`) |
+| `wcag-score` | WCAG accessibility score (0-100) |
+| `ux-score` | UX quality score (0-100) |
 
 ## Fail Modes
 
@@ -141,7 +147,7 @@ jobs:
 
 When `comment: true` (default), the action posts a summary comment on the PR with:
 
-- Score and grade
+- Overall score, WCAG score, and UX score
 - Issue count by severity
 - Pass/fail status
 - Top fix recommendations (when `recipe: true`)

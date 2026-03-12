@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ── SiteProof Accessibility Scanner — GitHub Action ──
+# ── SiteProof Website Quality Scanner — GitHub Action ──
 # Calls the SiteProof API, parses results, posts PR comments, and gates builds.
+# Returns both WCAG accessibility and UX quality scores.
 
 API_URL="${INPUT_API_URL}"
 ENDPOINT="/v1/scan"
@@ -36,14 +37,18 @@ if [[ "${SUCCESS}" != "true" ]]; then
   exit 1
 fi
 
-# Extract score and issues based on endpoint
+# Extract scores and issues based on endpoint
 if [[ "${INPUT_RECIPE}" == "true" ]]; then
   SCORE=$(echo "${RESPONSE}" | jq -r '.data.current_score // 0')
   ISSUE_COUNT=$(echo "${RESPONSE}" | jq -r '.data.recipe.total_issues // 0')
   EST_SCORE=$(echo "${RESPONSE}" | jq -r '.data.recipe.estimated_score_after // "N/A"')
   EST_GRADE=$(echo "${RESPONSE}" | jq -r '.data.recipe.estimated_grade_after // "N/A"')
+  WCAG_SCORE="N/A"
+  UX_SCORE="N/A"
 else
   SCORE=$(echo "${RESPONSE}" | jq -r '.data.score.overall // 0')
+  WCAG_SCORE=$(echo "${RESPONSE}" | jq -r '.data.score.wcag // "N/A"')
+  UX_SCORE=$(echo "${RESPONSE}" | jq -r '.data.score.human // "N/A"')
   ISSUE_COUNT=$(echo "${RESPONSE}" | jq -r '(.data.issues // []) | length')
   EST_SCORE="N/A"
   EST_GRADE="N/A"
@@ -58,6 +63,7 @@ else GRADE="F"
 fi
 
 echo "Score: ${SCORE}/100 (Grade ${GRADE})"
+[[ "${WCAG_SCORE}" != "N/A" ]] && echo "  WCAG: ${WCAG_SCORE}/100 | UX: ${UX_SCORE}/100"
 echo "Issues: ${ISSUE_COUNT}"
 
 # ── Count issues by severity ──
@@ -80,6 +86,8 @@ echo "::endgroup::"
 echo "score=${SCORE}" >> "${GITHUB_OUTPUT}"
 echo "grade=${GRADE}" >> "${GITHUB_OUTPUT}"
 echo "issues=${ISSUE_COUNT}" >> "${GITHUB_OUTPUT}"
+echo "wcag-score=${WCAG_SCORE}" >> "${GITHUB_OUTPUT}"
+echo "ux-score=${UX_SCORE}" >> "${GITHUB_OUTPUT}"
 
 # ── Determine pass/fail ──
 PASSED="true"
@@ -119,12 +127,16 @@ echo "passed=${PASSED}" >> "${GITHUB_OUTPUT}"
 
 # ── Write job summary ──
 {
-  echo "## SiteProof Accessibility Report"
+  echo "## SiteProof Website Quality Report"
   echo ""
   echo "| Metric | Value |"
   echo "|--------|-------|"
   echo "| URL | \`${INPUT_URL}\` |"
-  echo "| Score | **${SCORE}/100** (Grade **${GRADE}**) |"
+  echo "| Overall Score | **${SCORE}/100** (Grade **${GRADE}**) |"
+  if [[ "${WCAG_SCORE}" != "N/A" ]]; then
+    echo "| WCAG Accessibility | ${WCAG_SCORE}/100 |"
+    echo "| UX Quality | ${UX_SCORE}/100 |"
+  fi
   echo "| Issues | ${ISSUE_COUNT} (${CRITICAL} critical, ${SERIOUS} serious, ${MODERATE} moderate, ${MINOR} minor) |"
   if [[ "${EST_SCORE}" != "N/A" ]]; then
     echo "| Est. after fix | ${EST_SCORE}/100 (Grade ${EST_GRADE}) |"
@@ -159,7 +171,8 @@ if [[ "${INPUT_COMMENT}" == "true" ]]; then
   SCAN_RESPONSE="${RESPONSE}" bash "$(dirname "$0")/comment.sh" \
     "${SCORE}" "${GRADE}" "${ISSUE_COUNT}" \
     "${CRITICAL}" "${SERIOUS}" "${MODERATE}" "${MINOR}" \
-    "${PASSED}" "${FAIL_REASON}" "${EST_SCORE}" "${EST_GRADE}"
+    "${PASSED}" "${FAIL_REASON}" "${EST_SCORE}" "${EST_GRADE}" \
+    "${WCAG_SCORE}" "${UX_SCORE}"
 fi
 
 # ── Exit with appropriate code ──
@@ -168,4 +181,4 @@ if [[ "${PASSED}" == "false" ]]; then
   exit 1
 fi
 
-echo "Accessibility check passed (score: ${SCORE}, grade: ${GRADE})"
+echo "Quality check passed (score: ${SCORE}, grade: ${GRADE})"

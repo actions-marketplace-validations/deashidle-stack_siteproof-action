@@ -3,7 +3,7 @@ set -euo pipefail
 
 # ── SiteProof PR Comment — GitHub Action ──
 # Creates or updates a PR comment with scan results.
-# Called by scan.sh with positional args.
+# Called by scan.sh with positional args + SCAN_RESPONSE env var.
 
 SCORE="$1"
 GRADE="$2"
@@ -16,6 +16,8 @@ PASSED="$8"
 FAIL_REASON="$9"
 EST_SCORE="${10}"
 EST_GRADE="${11}"
+WCAG_SCORE="${12:-N/A}"
+UX_SCORE="${13:-N/A}"
 RESPONSE="${SCAN_RESPONSE:-}"
 
 MARKER="<!-- siteproof-scan -->"
@@ -44,12 +46,20 @@ esac
 
 # ── Build comment body ──
 BODY="${MARKER}
-## ${EMOJI} SiteProof Accessibility Report
+## ${EMOJI} SiteProof Website Quality Report
 
 | Metric | Value |
 |--------|-------|
 | URL | \`${INPUT_URL}\` |
-| Score | **${SCORE}/100** (Grade **${GRADE}**) |
+| Overall Score | **${SCORE}/100** (Grade **${GRADE}**) |"
+
+if [[ "${WCAG_SCORE}" != "N/A" ]]; then
+  BODY="${BODY}
+| WCAG Accessibility | ${WCAG_SCORE}/100 |
+| UX Quality | ${UX_SCORE}/100 |"
+fi
+
+BODY="${BODY}
 | Issues | ${ISSUE_COUNT} (${CRITICAL} critical, ${SERIOUS} serious, ${MODERATE} moderate, ${MINOR} minor) |"
 
 if [[ "${EST_SCORE}" != "N/A" ]]; then

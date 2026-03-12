@@ -1,5 +1,5 @@
-name: 'SiteProof Accessibility Scanner'
-description: 'Scan websites for WCAG accessibility issues and get structured fix recipes with SiteProof API'
+name: 'SiteProof Website Quality Scanner'
+description: 'Scan websites for WCAG accessibility and UX quality issues. Get structured fix recipes with SiteProof API.'
 branding:
   icon: 'eye'
   color: 'purple'
@@ -34,7 +34,7 @@ inputs:
 
 outputs:
   score:
-    description: 'Overall accessibility score (0-100)'
+    description: 'Overall quality score (0-100)'
     value: ${{ steps.scan.outputs.score }}
   grade:
     description: 'Grade (A-F)'
@@ -45,6 +45,12 @@ outputs:
   passed:
     description: 'Whether the check passed (true/false)'
     value: ${{ steps.scan.outputs.passed }}
+  wcag-score:
+    description: 'WCAG accessibility score (0-100)'
+    value: ${{ steps.scan.outputs.wcag-score }}
+  ux-score:
+    description: 'UX quality score (0-100)'
+    value: ${{ steps.scan.outputs.ux-score }}
 
 runs:
   using: 'composite'
